@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { getBestMove } from '../utils/aiOpponent';
+import type { Difficulty } from '../components/DifficultySelector';
 
 export type CellValue = 'X' | 'O' | null;
 export type GameStatus = 'playing' | 'won' | 'draw';
@@ -14,6 +15,12 @@ interface GameState {
   winner: Player | null;
   winningLine: number[] | null;
   isAiThinking: boolean;
+  difficulty: Difficulty;
+  scores: {
+    player: number;
+    ai: number;
+    draws: number;
+  };
 }
 
 // All possible winning combinations (rows, columns, diagonals)
@@ -28,15 +35,56 @@ const WINNING_COMBINATIONS = [
   [2, 4, 6], // diagonal top-right to bottom-left
 ];
 
-export function useGameState() {
-  const [gameState, setGameState] = useState<GameState>({
+// Get the initial game state from localStorage if available
+const getInitialState = (): GameState => {
+  if (typeof window !== 'undefined') {
+    const savedState = localStorage.getItem('ticTacToeState');
+    if (savedState) {
+      try {
+        const parsedState = JSON.parse(savedState);
+        return {
+          ...parsedState,
+          board: Array(9).fill(null),
+          currentPlayer: 'human',
+          status: 'playing',
+          winner: null,
+          winningLine: null,
+          isAiThinking: false,
+        };
+      } catch (e) {
+        console.error('Failed to parse saved state:', e);
+      }
+    }
+  }
+
+  return {
     board: Array(9).fill(null),
     currentPlayer: 'human',
     status: 'playing',
     winner: null,
     winningLine: null,
     isAiThinking: false,
-  });
+    difficulty: 'medium',
+    scores: {
+      player: 0,
+      ai: 0,
+      draws: 0,
+    },
+  };
+};
+
+export function useGameState() {
+  const [gameState, setGameState] = useState<GameState>(getInitialState);
+
+  // Save scores and difficulty to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ticTacToeState', JSON.stringify({
+        difficulty: gameState.difficulty,
+        scores: gameState.scores,
+      }));
+    }
+  }, [gameState.scores, gameState.difficulty]);
 
   // Check if the game is won or drawn
   const checkGameStatus = useCallback((board: CellValue[]): { status: GameStatus; winningLine: number[] | null } => {
@@ -55,6 +103,26 @@ export function useGameState() {
 
     // Game is still in progress
     return { status: 'playing', winningLine: null };
+  }, []);
+
+  // Update scores based on game result
+  const updateScores = useCallback((winner: Player | null) => {
+    setGameState(prevState => ({
+      ...prevState,
+      scores: {
+        player: prevState.scores.player + (winner === 'human' ? 1 : 0),
+        ai: prevState.scores.ai + (winner === 'ai' ? 1 : 0),
+        draws: prevState.scores.draws + (winner === null ? 1 : 0),
+      },
+    }));
+  }, []);
+
+  // Set difficulty level
+  const setDifficulty = useCallback((difficulty: Difficulty) => {
+    setGameState(prevState => ({
+      ...prevState,
+      difficulty,
+    }));
   }, []);
 
   // Make a move
@@ -76,6 +144,13 @@ export function useGameState() {
     // Check if the game is won or drawn after human move
     const { status, winningLine } = checkGameStatus(newBoard);
 
+    // Update scores if the game is over
+    if (status === 'won') {
+      updateScores('human');
+    } else if (status === 'draw') {
+      updateScores(null);
+    }
+
     // Update the game state after human move
     setGameState(prevState => ({
       ...prevState,
@@ -88,15 +163,15 @@ export function useGameState() {
     }));
 
     return true;
-  }, [gameState, checkGameStatus]);
+  }, [gameState, checkGameStatus, updateScores]);
 
   // AI makes a move
   useEffect(() => {
     if (gameState.currentPlayer === 'ai' && gameState.status === 'playing' && gameState.isAiThinking) {
       // Add a slight delay to make the AI's move feel more natural
       const aiMoveTimeout = setTimeout(() => {
-        // Get the best move for the AI
-        const aiMoveIndex = getBestMove(gameState.board);
+        // Get the best move for the AI based on difficulty
+        const aiMoveIndex = getBestMove(gameState.board, gameState.difficulty);
 
         // Create a new board with the AI move
         const newBoard = [...gameState.board];
@@ -104,6 +179,13 @@ export function useGameState() {
 
         // Check if the game is won or drawn after AI move
         const { status, winningLine } = checkGameStatus(newBoard);
+
+        // Update scores if the game is over
+        if (status === 'won') {
+          updateScores('ai');
+        } else if (status === 'draw') {
+          updateScores(null);
+        }
 
         // Update the game state after AI move
         setGameState(prevState => ({
@@ -119,18 +201,31 @@ export function useGameState() {
 
       return () => clearTimeout(aiMoveTimeout);
     }
-  }, [gameState, checkGameStatus]);
+  }, [gameState, checkGameStatus, updateScores]);
 
   // Reset the game
   const resetGame = useCallback(() => {
-    setGameState({
+    setGameState(prevState => ({
+      ...prevState,
       board: Array(9).fill(null),
       currentPlayer: 'human',
       status: 'playing',
       winner: null,
       winningLine: null,
       isAiThinking: false,
-    });
+    }));
+  }, []);
+
+  // Reset scores
+  const resetScores = useCallback(() => {
+    setGameState(prevState => ({
+      ...prevState,
+      scores: {
+        player: 0,
+        ai: 0,
+        draws: 0,
+      },
+    }));
   }, []);
 
   return {
@@ -140,7 +235,11 @@ export function useGameState() {
     winner: gameState.winner,
     winningLine: gameState.winningLine,
     isAiThinking: gameState.isAiThinking,
+    difficulty: gameState.difficulty,
+    scores: gameState.scores,
     makeMove,
     resetGame,
+    resetScores,
+    setDifficulty,
   };
 }
