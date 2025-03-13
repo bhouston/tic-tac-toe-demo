@@ -1,4 +1,5 @@
 import { CellValue } from '../hooks/useGameState';
+import type { Difficulty } from '../components/DifficultySelector';
 
 // All possible winning combinations (rows, columns, diagonals)
 const WINNING_COMBINATIONS = [
@@ -51,6 +52,7 @@ function makeMove(board: CellValue[], index: number, player: CellValue): CellVal
 function minimax(
   board: CellValue[],
   depth: number,
+  maxDepth: number,
   isMaximizing: boolean,
   alpha: number = -Infinity,
   beta: number = Infinity
@@ -65,7 +67,7 @@ function minimax(
   }
 
   // Maximum depth reached
-  if (depth >= 9) {
+  if (depth >= maxDepth) {
     return { score: 0 };
   }
 
@@ -78,7 +80,7 @@ function minimax(
     bestScore = -Infinity;
     for (const move of availableMoves) {
       const newBoard = makeMove(board, move, 'O');
-      const { score } = minimax(newBoard, depth + 1, false, alpha, beta);
+      const { score } = minimax(newBoard, depth + 1, maxDepth, false, alpha, beta);
       
       if (score > bestScore) {
         bestScore = score;
@@ -94,7 +96,7 @@ function minimax(
     bestScore = Infinity;
     for (const move of availableMoves) {
       const newBoard = makeMove(board, move, 'X');
-      const { score } = minimax(newBoard, depth + 1, true, alpha, beta);
+      const { score } = minimax(newBoard, depth + 1, maxDepth, true, alpha, beta);
       
       if (score < bestScore) {
         bestScore = score;
@@ -110,14 +112,47 @@ function minimax(
   return { score: bestScore, move: bestMove };
 }
 
-// Get the best move for the AI
-export function getBestMove(board: CellValue[]): number {
+// Make a random move (for easy difficulty)
+function getRandomMove(board: CellValue[]): number {
+  const availableMoves = getAvailableMoves(board);
+  return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+}
+
+// Get a move with limited lookahead (for medium difficulty)
+function getMediumMove(board: CellValue[]): number {
+  // 70% chance of making the best move, 30% chance of making a random move
+  if (Math.random() < 0.3) {
+    return getRandomMove(board);
+  }
+  
+  // Limited lookahead (3 moves)
+  const { move } = minimax(board, 0, 3, true);
+  return move !== undefined ? move : getAvailableMoves(board)[0];
+}
+
+// Get the best move (for hard difficulty)
+function getHardMove(board: CellValue[]): number {
   // If the board is empty, choose a corner or the center
   if (board.every(cell => cell === null)) {
     const firstMoves = [0, 2, 4, 6, 8]; // Corners and center
     return firstMoves[Math.floor(Math.random() * firstMoves.length)];
   }
 
-  const { move } = minimax(board, 0, true);
+  // Full lookahead
+  const { move } = minimax(board, 0, 9, true);
   return move !== undefined ? move : getAvailableMoves(board)[0];
+}
+
+// Get the best move for the AI based on difficulty
+export function getBestMove(board: CellValue[], difficulty: Difficulty): number {
+  switch (difficulty) {
+    case 'easy':
+      return getRandomMove(board);
+    case 'medium':
+      return getMediumMove(board);
+    case 'hard':
+      return getHardMove(board);
+    default:
+      return getHardMove(board);
+  }
 }
