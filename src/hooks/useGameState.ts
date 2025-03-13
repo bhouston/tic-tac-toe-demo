@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { getBestMove } from '../utils/aiOpponent';
 
 export type CellValue = 'X' | 'O' | null;
 export type GameStatus = 'playing' | 'won' | 'draw';
@@ -12,6 +13,7 @@ interface GameState {
   status: GameStatus;
   winner: Player | null;
   winningLine: number[] | null;
+  isAiThinking: boolean;
 }
 
 // All possible winning combinations (rows, columns, diagonals)
@@ -33,6 +35,7 @@ export function useGameState() {
     status: 'playing',
     winner: null,
     winningLine: null,
+    isAiThinking: false,
   });
 
   // Check if the game is won or drawn
@@ -56,29 +59,66 @@ export function useGameState() {
 
   // Make a move
   const makeMove = useCallback((index: number) => {
-    // Don't allow moves if the game is over or the cell is already filled
-    if (gameState.status !== 'playing' || gameState.board[index] !== null) {
+    // Don't allow moves if the game is over, the cell is already filled, or AI is thinking
+    if (
+      gameState.status !== 'playing' || 
+      gameState.board[index] !== null || 
+      gameState.currentPlayer !== 'human' ||
+      gameState.isAiThinking
+    ) {
       return false;
     }
 
-    // Create a new board with the move
+    // Create a new board with the human move
     const newBoard = [...gameState.board];
-    const marker = gameState.currentPlayer === 'human' ? 'X' : 'O';
-    newBoard[index] = marker;
+    newBoard[index] = 'X';
 
-    // Check if the game is won or drawn
+    // Check if the game is won or drawn after human move
     const { status, winningLine } = checkGameStatus(newBoard);
 
-    // Update the game state
-    setGameState({
+    // Update the game state after human move
+    setGameState(prevState => ({
+      ...prevState,
       board: newBoard,
-      currentPlayer: gameState.currentPlayer === 'human' ? 'ai' : 'human',
+      currentPlayer: status === 'playing' ? 'ai' : 'human',
       status,
-      winner: status === 'won' ? gameState.currentPlayer : null,
+      winner: status === 'won' ? 'human' : null,
       winningLine,
-    });
+      isAiThinking: status === 'playing',
+    }));
 
     return true;
+  }, [gameState, checkGameStatus]);
+
+  // AI makes a move
+  useEffect(() => {
+    if (gameState.currentPlayer === 'ai' && gameState.status === 'playing' && gameState.isAiThinking) {
+      // Add a slight delay to make the AI's move feel more natural
+      const aiMoveTimeout = setTimeout(() => {
+        // Get the best move for the AI
+        const aiMoveIndex = getBestMove(gameState.board);
+
+        // Create a new board with the AI move
+        const newBoard = [...gameState.board];
+        newBoard[aiMoveIndex] = 'O';
+
+        // Check if the game is won or drawn after AI move
+        const { status, winningLine } = checkGameStatus(newBoard);
+
+        // Update the game state after AI move
+        setGameState(prevState => ({
+          ...prevState,
+          board: newBoard,
+          currentPlayer: 'human',
+          status,
+          winner: status === 'won' ? 'ai' : null,
+          winningLine,
+          isAiThinking: false,
+        }));
+      }, 500); // 500ms delay for AI move
+
+      return () => clearTimeout(aiMoveTimeout);
+    }
   }, [gameState, checkGameStatus]);
 
   // Reset the game
@@ -89,6 +129,7 @@ export function useGameState() {
       status: 'playing',
       winner: null,
       winningLine: null,
+      isAiThinking: false,
     });
   }, []);
 
@@ -98,6 +139,7 @@ export function useGameState() {
     status: gameState.status,
     winner: gameState.winner,
     winningLine: gameState.winningLine,
+    isAiThinking: gameState.isAiThinking,
     makeMove,
     resetGame,
   };
