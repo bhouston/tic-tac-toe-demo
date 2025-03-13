@@ -1,36 +1,150 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tic Tac Toe Game
+
+A modern, responsive Tic Tac Toe game built with Next.js, TypeScript, and Tailwind CSS. Play against an AI opponent with adjustable difficulty levels!
+
+![Tic Tac Toe Game Screenshot](public/screenshot.png)
+
+## Features
+
+- **Responsive Game Board**: A clean, modern 3x3 grid that works on all screen sizes
+- **AI Opponent**: Play against a computer opponent with three difficulty levels:
+  - **Easy**: Makes random moves
+  - **Medium**: Makes strategic moves with occasional mistakes
+  - **Hard**: Uses the Minimax algorithm for optimal play
+- **Score Tracking**: Keeps track of wins, losses, and draws across sessions
+- **Visual Feedback**: Animations and highlighting for game actions and winning lines
+- **Sound Effects**: Audio feedback for placing markers and game outcomes
+- **Persistent State**: Game scores and settings are saved in localStorage
+
+## Live Demo
+
+Try the game online: [Tic Tac Toe Demo](https://tic-tac-toe-demo.vercel.app)
+
+## Technologies Used
+
+- **Next.js 15**: React framework with App Router
+- **TypeScript**: For type safety and improved developer experience
+- **Tailwind CSS**: For styling and responsive design
+- **React Hooks**: For state management
+- **Web Audio API**: For sound effects
+- **LocalStorage API**: For persistence
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18.17 or later
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/bhouston/tic-tac-toe-demo.git
+   cd tic-tac-toe-demo
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn
+   # or
+   pnpm install
+   # or
+   bun install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   # or
+   bun dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the game.
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js App Router files
+│   ├── globals.css      # Global styles
+│   ├── layout.tsx       # Root layout component
+│   └── page.tsx         # Main game page
+├── components/          # React components
+│   ├── Cell.tsx         # Individual game board cell
+│   ├── DifficultySelector.tsx # Difficulty level selector
+│   ├── GameBoard.tsx    # Game board component
+│   ├── GameStatus.tsx   # Game status display
+│   └── ScoreTracker.tsx # Score tracking component
+├── hooks/               # Custom React hooks
+│   └── useGameState.ts  # Game state management hook
+└── utils/               # Utility functions
+    └── aiOpponent.ts    # AI opponent implementation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Guidelines
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Code Style
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Follow TypeScript best practices
+- Use functional components with hooks
+- Follow the naming conventions in the codebase
+- Use tailwind classes for styling
 
-## Learn More
+### Adding Features
 
-To learn more about Next.js, take a look at the following resources:
+When adding new features:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create a new branch from `main`
+2. Implement your changes
+3. Test thoroughly
+4. Submit a PR with a clear description
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Running Tests
 
-## Deploy on Vercel
+```bash
+npm run test
+# or
+yarn test
+# or
+pnpm test
+# or
+bun test
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Building for Production
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+# or
+yarn build
+# or
+pnpm build
+# or
+bun build
+```
+
+The optimized production build will be generated in the `.next` folder.
+
+## Deployment
+
+This project can be easily deployed on [Vercel](https://vercel.com/new) or any other Next.js-compatible hosting platform.
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTORS.md](CONTRIBUTORS.md) for details on how to contribute to this project.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- The Minimax algorithm implementation is based on traditional game theory approaches
+- UI design inspired by modern web applications and game interfaces
