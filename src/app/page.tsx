@@ -10,6 +10,7 @@ export default function Home() {
     status, 
     winner, 
     winningLine, 
+    isAiThinking,
     makeMove, 
     resetGame 
   } = useGameState();
@@ -23,6 +24,8 @@ export default function Home() {
       return `${winner === 'human' ? 'You' : 'AI'} won!`;
     } else if (status === 'draw') {
       return "It's a draw!";
+    } else if (isAiThinking) {
+      return "AI is thinking...";
     } else {
       return `${currentPlayer === 'human' ? 'Your' : 'AI'} turn`;
     }
